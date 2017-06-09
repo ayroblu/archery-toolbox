@@ -13,7 +13,7 @@ import es from 'react-intl/locale-data/es'
 import fr from 'react-intl/locale-data/fr'
 import it from 'react-intl/locale-data/it'
 import zh from 'react-intl/locale-data/zh'
-import localeData from '../localeData.json'
+import localeData from './localeData.json'
 
 import configureStore from './store'
 import './index.css'

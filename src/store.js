@@ -1,7 +1,7 @@
 import { createStore, applyMiddleware, compose } from 'redux'
 //import createLogger from 'redux-logger'
 //import createSagaMiddleware from 'redux-saga'
-import { routerMiddleware } from 'react-router-redux'
+//import { routerMiddleware } from 'react-router-redux'
 
 import reducers from './reducers'
 import DevTools from './components/DevTools'
@@ -13,11 +13,11 @@ const isProduction = process.env.NODE_ENV === 'production'
 
 export default function configureStore(initialState = {}, history) {
   // Create the store with two middlewares
-  const historyMiddleware = routerMiddleware(history)
+  //const historyMiddleware = routerMiddleware(history)
   const middlewares = [
   //  sagaMiddleware
   //, logger
-    historyMiddleware
+    //historyMiddleware
   ]
 
   const enhancers = [
