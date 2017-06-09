@@ -1,8 +1,8 @@
-const yardsToMetres = v=>0.9144*v
-const metresToYards = v=>1.09361*v
-const distances = Array.from(new Set(Array(90/5).fill().map((v,i)=>(i+1)*5).concat(
-  Array(100/5).fill().map((v,i)=>Math.round(yardsToMetres((i+1)*5)))
-))).sort((a,b)=>a-b)
+export const yardsToMetres = v=>0.9144*v
+export const metresToYards = v=>1.09361*v
+//const distances = Array.from(new Set(Array(90/5).fill().map((v,i)=>(i+1)*5).concat(
+//  Array(100/5).fill().map((v,i)=>Math.round(yardsToMetres((i+1)*5)))
+//))).sort((a,b)=>a-b)
 
 export function calcPos(angle, t, params={}){
   const g = 9.81
@@ -27,7 +27,7 @@ export function calcPos(angle, t, params={}){
 export function getShotAngle(dist=30, targetAngle=20*Math.PI/180, params={}){
   const dist_horizontal = dist * Math.cos(targetAngle)
   const dist_vertical = dist * Math.sin(targetAngle)
-  const maxAngle = 45 * Math.PI/180
+  const maxAngle = 90 * Math.PI/180
   //console.log(`dist: ${dist_horizontal}m, ${dist_vertical}m`)
 
   let t = 0

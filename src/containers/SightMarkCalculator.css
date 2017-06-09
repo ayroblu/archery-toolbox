@@ -1,0 +1,19 @@
+.SightMarkCalculator{
+}
+.SightMarkCalculator > h1{
+  text-align: center;
+}
+.SightMarkCalculator > table{
+  border-collapse: collapse;
+  margin: auto;
+}
+.SightMarkCalculator td{
+  text-align:center;
+}
+.SightMarkCalculator tbody th{
+  text-align: right;
+}
+.SightMarkCalculator .highlight{
+  background-color: #fafafa;
+}
+

@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
+import { Link } from 'react-router-dom'
 
 import * as mainActions from '../actions/main'
 import './FrontPage.css'
@@ -11,7 +12,7 @@ class FrontPage extends Component {
       <section className='FrontPage'>
         <h1>Archery Toolbox</h1>
         <ul>
-          <li>Calculate Sight Marks</li>
+          <li><Link to='/smc'>Calculate Sight Marks</Link></li>
           <li>Bow Tuning
             <ul>
               <li>Alignment</li>
