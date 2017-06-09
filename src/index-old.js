@@ -1,9 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import registerServiceWorker from './registerServiceWorker'
 import { Provider } from 'react-redux'
 import createHistory from 'history/createBrowserHistory'
-import { BrowserRouter, withRouter } from 'react-router-dom'
+import { ConnectedRouter } from 'react-router-redux'
+import { withRouter } from 'react-router-dom'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 import injectTapEventPlugin from 'react-tap-event-plugin'
 import { IntlProvider, addLocaleData } from 'react-intl'
@@ -19,7 +19,6 @@ import configureStore from './store'
 import './index.css'
 import App from './containers/App'
 import DevTools from './components/DevTools'
-import {isHotReload} from './config'
 
 // Needed for onTouchTap
 // http://stackoverflow.com/a/34015469/988941
@@ -55,11 +54,11 @@ const render = Container=>{
   ReactDOM.render(
     <Provider store={store}>
       <div>
-        <BrowserRouter history={history}>
+        <ConnectedRouter history={history}>
           <MuiThemeProvider>
             <Inter />
           </MuiThemeProvider>
-        </BrowserRouter>
+        </ConnectedRouter>
         {!isProduction && <DevTools />}
       </div>
     </Provider>
@@ -87,13 +86,10 @@ if (!window.intl) {
   render(App)
 }
 
-if (isHotReload && module.hot) {
+if (process.env.NODE_ENV==='development' && module.hot) {
   module.hot.accept('./containers/App', () => {
     console.clear()
     const NewApp = require('./containers/App').default
     render(NewApp)
   })
 }
-
-//ReactDOM.render(<App />, document.getElementById('root'))
-registerServiceWorker()
