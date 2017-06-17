@@ -40,7 +40,7 @@ export function getShotAngle(dist=30, targetAngle=20*Math.PI/180, params={}){
   let upperT = null
   let lowerT = 0
   while (++counter < 1e5 && upperT === null){
-    const {x,y,velocity} = calcPos(angle, t+=0.1, params)
+    const {x,y} = calcPos(angle, t+=0.1, params)
 
     // we want bounding, where at x > dist_horizontal -> y > dist_vertical
     if (x > dist_horizontal){
@@ -95,10 +95,10 @@ export function getShotAngle(dist=30, targetAngle=20*Math.PI/180, params={}){
   }
   return result
 }
-export function getSightHeight(dist, targetAngle, angle){
+export function getSightHeight(dist, targetAngle, angle, params={}){
   //const vel = 58
-  const arm = 0.73+0.16 // drawlength + sight length = 0.73+x
-  const jaw = 0.14
+  const arm = params.arm || 0.73+0.16 // drawlength + sight length = 0.73+0.16
+  const jaw = params.jaw || 0.14
   const dist_horizontal = dist * Math.cos(targetAngle)
   const alpha = targetAngle - Math.atan(jaw*Math.cos(targetAngle)/dist_horizontal)
   const phi = angle - alpha
@@ -107,10 +107,11 @@ export function getSightHeight(dist, targetAngle, angle){
 }
 export function getSight(dist, targetAngle, params={}){
   const {x, y, velocity, angle, t} = getShotAngle(dist, targetAngle, params)
-  const {sightHeight} = getSightHeight(dist, targetAngle, angle)
+  const {sightHeight} = getSightHeight(dist, targetAngle, angle, params)
   return {x, y, velocity, angle, t, sightHeight}
 }
-export function calcArrowSpeed(desired, params={}){
+export function calcArrowSpeed(farDistance, shortDistance, desired, params={}){
+//farDistance(m), shortDistance(m), desired(mm)
   const tol = 1e-5
 
   let arrowSpeed = 50
@@ -123,10 +124,9 @@ export function calcArrowSpeed(desired, params={}){
     if (upperArrowSpeed !== null){
       arrowSpeed = (upperArrowSpeed + lowerArrowSpeed)/2
     }
-    const firstSm = getShotAngle(18, 0, Object.assign({}, params, {arrowSpeed}))
-    const secondSm = getShotAngle(60, 0, Object.assign({}, params, {arrowSpeed}))
-    const {sightHeight: firstSight} = getSightHeight(18, 0, firstSm.angle)
-    const {sightHeight: secondSight} = getSightHeight(60, 0, secondSm.angle)
+    const p = {...params, arrowSpeed}
+    const {sightHeight: firstSight} = getSight(shortDistance, 0, p)
+    const {sightHeight: secondSight} = getSight(farDistance, 0, p)
 
     const diff = Math.abs(firstSight - secondSight)
     if (upperArrowSpeed !== null){
