@@ -26,7 +26,6 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "redux:add": "node custom-scripts/redux.js",
     "build:locale": "NODE_ENV=development babel-node generateLocaleMessages.js",
     "eject": "react-scripts eject"
   }
