@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "flow-bin": "^0.50.0",
     "intl": "^1.2.5",
     "material-ui": "^0.18.3",
     "react": "^15.5.4",
@@ -26,6 +27,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
+    "flow": "flow",
     "build:locale": "NODE_ENV=development babel-node generateLocaleMessages.js",
     "eject": "react-scripts eject"
   }
