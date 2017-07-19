@@ -68,7 +68,7 @@ export function getSight(params: SightParams): SightResult{
   const angle = getShotAngle(params)
   return getSightHeight(params, angle)
 }
-export function calcArrowSpeed(params: ArrowSpeedParams){
+export function calcArrowSpeed(params: ArrowSpeedParams): number{
   const {farDistance, shortDistance, desiredSightMark, ...extras} = params
 
   let initialArrowSpeed = 50

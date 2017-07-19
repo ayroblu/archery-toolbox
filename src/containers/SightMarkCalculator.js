@@ -62,7 +62,7 @@ class SightMarkCalculator extends Component {
         const angledMarks = angles.map(targetAngle=>{
           const s_v = d*Math.sin(targetAngle)
           const s_h = d*Math.cos(targetAngle)
-          return smcnd.getSight({v: arrowSpeed, s_v, s_h, arm, jaw})
+          return smcnd.getSight({...params, s_v, s_h})
         }).map(m=>({...m, sightHeight: referenceMark - m.sightHeight}))
         return {
           angledMarks

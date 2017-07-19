@@ -5,8 +5,6 @@ import type {SightParams, SightResult, ArrowSpeedParams} from './Params'
 export const yardsToMetres = (v: number)=>0.9144*v
 export const metresToYards = (v: number)=>1.09361*v
 const g = 9.81 // gravitational force
-//const arm = 0.73+0.16
-//const jaw = 0.14
 
 export function getSight({v, s_v, s_h, arm, jaw}: SightParams): SightResult{
   const a = 4 * v**4 * (s_h**2 + s_v**2)
@@ -26,8 +24,7 @@ export function getSight({v, s_v, s_h, arm, jaw}: SightParams): SightResult{
   const sightHeight = jaw - arm*Math.tan(phi)
   return {theta, alpha, phi, sightHeight}
 }
-//export function calcArrowSpeed(farDistance: number, shortDistance: number, desired: number, params:any={}){
-export function calcArrowSpeed(params: ArrowSpeedParams){
+export function calcArrowSpeed(params: ArrowSpeedParams): number{
   //farDistance(m), shortDistance(m), desiredSightMark(mm)
   const {farDistance, shortDistance, desiredSightMark, ...extras} = params
 
