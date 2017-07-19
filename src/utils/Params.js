@@ -6,7 +6,7 @@ export type Bounds = {
 , upperBound: number
 }
 export type SightParams = {
-  v: number
+  v: number // arrowSpeed...
 , s_v: number
 , s_h: number
 , arm: number
@@ -17,6 +17,18 @@ export type SightResult = {
 , alpha: number
 , phi: number
 , sightHeight: number
+}
+export type ArrowPos = {
+  x: number
+, y: number
+, velocity: number
+}
+export type ArrowParams = {
+  m: number
+, A: number
+, Cd: number
+, density: number
+, arrowSpeed: number
 }
 export type ArrowSpeedParams = {
   farDistance: number

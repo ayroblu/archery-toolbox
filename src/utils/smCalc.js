@@ -1,6 +1,6 @@
 // @flow
 import {convergeFunc} from './converger'
-import type {SightParams, SightResult, ArrowSpeedParams} from './Params'
+import type {SightParams, SightResult, ArrowPos, ArrowParams, ArrowSpeedParams} from './Params'
 
 export const yardsToMetres = (v: number)=>0.9144*v
 export const metresToYards = (v: number)=>1.09361*v
@@ -8,13 +8,9 @@ export const metresToYards = (v: number)=>1.09361*v
 //  Array(100/5).fill().map((v,i)=>Math.round(yardsToMetres((i+1)*5)))
 //))).sort((a,b)=>a-b)
 
-export function calcPos(angle: number, t:number, params: any={}){
+export function calcPos(angle: number, t:number, params: ArrowParams={}): ArrowPos{
   const g = 9.81
-  const m = params.m || 0.02 //20grams - 300 grains
-  const A = params.A || 0.01**2 // square cm approx
-  const Cd = params.Cd || 0.1 //Rough coefficient of drag
-  const density = params.density || 1.225 // density of air
-  const arrowSpeed = params.arrowSpeed || 58 //metres per second
+  const {m, A, Cd, density, arrowSpeed} = params
 
   const v_terminal = Math.sqrt((2*m*g)/(Cd*A*density)) // terminal velocity
   const v_initial = arrowSpeed * Math.sin(angle)
@@ -28,292 +24,62 @@ export function calcPos(angle: number, t:number, params: any={}){
 
   return {x,y,velocity}
 }
-//export function getShotAngle(dist:number=30, targetAngle:number=20*Math.PI/180, params:any={}){
-//  const dist_horizontal = dist * Math.cos(targetAngle)
-//  const dist_vertical = dist * Math.sin(targetAngle)
-//  const maxAngle = 90 * Math.PI/180
-//  //console.log(`dist: ${dist_horizontal}m, ${dist_vertical}m`)
-//
-//  let angle = targetAngle + 5 * Math.PI/180
-//
-//  // first we crawl
-//  return convergeFunc((t: number)=>{
-//    const {x,y} = calcPos(angle, t+=0.1, params)
-//  }, 10)
-//
-//  while (++counter < 1e5 && upperT === null){
-//    const {x,y} = calcPos(angle, t+=0.1, params)
-//
-//    // we want bounding, where at x > dist_horizontal -> y > dist_vertical
-//    if (x > dist_horizontal){
-//      if (y < dist_vertical) {
-//        angle += 5*Math.PI/180
-//        if (angle > maxAngle){
-//          console.log('Did not reach the distance')
-//          throw new Error('Calculation invalid')
-//        }
-//        t = 0
-//        continue
-//      } else {
-//        upperT = t
-//        lowerT = t - 0.1
-//        break
-//      }
-//    }
-//  }
-//  if (upperT === null || lowerT === null)
-//    throw new Error('Failed to converge calculating upper time')
-//
-//  let lowerAngle = targetAngle
-//  let upperAngle = angle
-//  let upperTime: number = upperT
-//  let result = null
-//  // get x right
-//  while (++counter < 1e4){
-//    t = (upperTime + lowerT) / 2
-//    angle = (upperAngle + lowerAngle) / 2
-//    //console.log('t', upperT, lowerT, upperT - lowerT, t, 'angle', upperAngle, lowerAngle, upperAngle - lowerAngle, angle)
-//
-//    const {x,y,velocity} = calcPos(angle, t, params)
-//
-//    if (Math.abs(upperTime - lowerT) > tol) {
-//      if (x > dist_horizontal){
-//        upperTime = t
-//      } else {
-//        lowerT = t
-//      }
-//      continue
-//    }
-//    if (Math.abs(upperAngle - lowerAngle) > tol) {
-//      if (y > dist_vertical){
-//        upperAngle = angle
-//      } else {
-//        lowerAngle = angle
-//      }
-//      continue
-//    }
-//    result = {x,y,velocity, angle, t}
-//    break
-//  }
-//  if (result === null){
-//    console.log('result (exceeded counter?)', result, counter)
-//    throw new Error('Calculation did not converge')
-//  }
-//  return result
-//}
-//export function getShotAngle({v, s_v, s_h, arm, jaw}: SightParams): SightResult{
-////export function getShotAngle(dist:number=30, targetAngle:number=20*Math.PI/180, params:any={}){
-//  const {farDistance, shortDistance, desiredSightMark, ...extras} = params
-//
-//  let initialArrowSpeed = 50
-//  return convergeFunc((arrowSpeed: number)=>{
-//    const {x,y} = calcPos(angle, t+=0.1, params)
-//    const p = {s_v: 0, v: arrowSpeed, ...extras}
-//    const {sightHeight: firstSight} = getSight({s_h: shortDistance, ...p})
-//    const {sightHeight: secondSight} = getSight({s_h: farDistance, ...p})
-//
-//    const diff = Math.abs(firstSight - secondSight)
-//
-//    const isLower = diff > desiredSightMark
-//    return {isLower}
-//  }, initialArrowSpeed, 1)
-//}
-export function getShotAngle(dist:number=30, targetAngle:number=20*Math.PI/180, params:any={}){
-  const dist_horizontal = dist * Math.cos(targetAngle)
-  const dist_vertical = dist * Math.sin(targetAngle)
-  const maxAngle = 90 * Math.PI/180
-  //console.log(`dist: ${dist_horizontal}m, ${dist_vertical}m`)
-
-  let t = 0
+export function getShotAngle({v, s_v, s_h, arm, jaw}: SightParams): number{
+  const arrowParams = {
+    m: 0.02 //20grams - 300 grains
+  , A: 0.01**2 // square cm approx
+  , Cd: 0.1 //Rough coefficient of drag
+  , density: 1.225 // density of air
+  , arrowSpeed: v
+  }
+  const initialTime = 0.1
+  const targetAngle = Math.atan(1.0*s_v/s_h)
   let counter = 0
-  let tol = 1e-5
-  let angle = targetAngle + 5 * Math.PI/180
+  let angle = targetAngle + 1 * Math.PI/180
+  while (++counter < 1e3) {
+    const time = convergeFunc((t: number)=>{
+      const {x} = calcPos(angle, t, arrowParams)
+      const isLower = x < s_h
+      return {isLower}
+    }, initialTime, 0.1)
+    const shootingAngle = convergeFunc((angle: number)=>{
+      const {y} = calcPos(angle, time, arrowParams)
+      const isLower = y < s_v
+      return {isLower}
+    }, targetAngle, 5*Math.PI/180)
 
-  // first we crawl
-  t = 0
-  let upperT = null
-  let lowerT = 0
-  while (++counter < 1e5 && upperT === null){
-    const {x,y} = calcPos(angle, t+=0.1, params)
-
-    // we want bounding, where at x > dist_horizontal -> y > dist_vertical
-    if (x > dist_horizontal){
-      if (y < dist_vertical) {
-        angle += 5*Math.PI/180
-        if (angle > maxAngle){
-          console.log('Did not reach the distance')
-          throw new Error('Calculation invalid')
-        }
-        t = 0
-        continue
-      } else {
-        upperT = t
-        lowerT = t - 0.1
-        break
-      }
+    const {x} = calcPos(angle, time, arrowParams)
+    if (Math.abs(s_h - x) < 1e3){
+      return shootingAngle
     }
+    angle = shootingAngle
   }
-  if (upperT === null || lowerT === null)
-    throw new Error('Failed to converge calculating upper time')
-
-  let lowerAngle = targetAngle
-  let upperAngle = angle
-  let upperTime: number = upperT
-  let result = null
-  // get x right
-  while (++counter < 1e4){
-    t = (upperTime + lowerT) / 2
-    angle = (upperAngle + lowerAngle) / 2
-    //console.log('t', upperT, lowerT, upperT - lowerT, t, 'angle', upperAngle, lowerAngle, upperAngle - lowerAngle, angle)
-
-    const {x,y,velocity} = calcPos(angle, t, params)
-
-    if (Math.abs(upperTime - lowerT) > tol) {
-      if (x > dist_horizontal){
-        upperTime = t
-      } else {
-        lowerT = t
-      }
-      continue
-    }
-    if (Math.abs(upperAngle - lowerAngle) > tol) {
-      if (y > dist_vertical){
-        upperAngle = angle
-      } else {
-        lowerAngle = angle
-      }
-      continue
-    }
-    result = {x,y,velocity, angle, t}
-    break
-  }
-  if (result === null){
-    console.log('result (exceeded counter?)', result, counter)
-    throw new Error('Calculation did not converge')
-  }
-  return result
+  throw new Error('Failed to converge to a shot angle')
 }
-export function getSightHeight(dist: number, targetAngle: number, angle: number, params: any={}){
-//export function getSightHeight({v, s_v, s_h, arm, jaw}: SightParams): SightResult{
+export function getSightHeight({v, s_v, s_h, arm, jaw}: SightParams, angle: number): SightResult{
   //const vel = 58
-  const arm = params.arm || 0.73+0.16 // drawlength + sight length = 0.73+0.16
-  const jaw = params.jaw || 0.14
-  const dist_horizontal = dist * Math.cos(targetAngle)
-  const alpha = targetAngle - Math.atan(jaw*Math.cos(targetAngle)/dist_horizontal)
+  const targetAngle = Math.atan(1.0*s_v/s_h)
+  const alpha = targetAngle - Math.atan(jaw*Math.cos(targetAngle)/s_h)
   const phi = angle - alpha
   const sightHeight = jaw - arm*Math.tan(phi)
-  return {alpha, phi, sightHeight}
+  return {alpha, phi, sightHeight, theta: angle}
 }
-export function getSight(dist: number, targetAngle: number, params: any={}){
-  const {x, y, velocity, angle, t} = getShotAngle(dist, targetAngle, params)
-  const {sightHeight} = getSightHeight(dist, targetAngle, angle, params)
-  return {x, y, velocity, angle, t, sightHeight}
+export function getSight(params: SightParams): SightResult{
+  const angle = getShotAngle(params)
+  return getSightHeight(params, angle)
 }
-//export function getSight({v, s_v, s_h, arm, jaw}: SightParams): SightResult{
-//  const {x, y, velocity, angle, t} = getShotAngle(dist, targetAngle, params)
-//  const {sightHeight} = getSightHeight(dist, targetAngle, angle, params)
-//  return {x, y, velocity, angle, t, sightHeight}
-//}
-//export function calcArrowSpeed(farDistance: number, shortDistance: number, desired: number, params:any={}){
-////farDistance(m), shortDistance(m), desired(mm)
-//  const tol = 1e-5
-//
-//  let arrowSpeed = 50
-//  let previousResult = null
-//  let upperArrowSpeed = null
-//  let lowerArrowSpeed = null
-//  let counter = 0
-//
-//  while (++counter < 1e3){
-//    if (upperArrowSpeed !== null){
-//      arrowSpeed = (upperArrowSpeed + lowerArrowSpeed)/2
-//    }
-//    const p = {...params, arrowSpeed}
-//    const {sightHeight: firstSight} = getSight(shortDistance, 0, p)
-//    const {sightHeight: secondSight} = getSight(farDistance, 0, p)
-//
-//    const diff = Math.abs(firstSight - secondSight)
-//    if (upperArrowSpeed !== null && lowerArrowSpeed !== null){
-//      if (upperArrowSpeed - lowerArrowSpeed < tol){
-//        break
-//      }
-//      if (diff < desired){
-//        upperArrowSpeed = arrowSpeed
-//      } else {
-//        lowerArrowSpeed = arrowSpeed
-//      }
-//    } else {
-//      if (previousResult && (previousResult.diff-desired > 0) !== (diff-desired > 0)){
-//        upperArrowSpeed = Math.max(previousResult.arrowSpeed, arrowSpeed)
-//        lowerArrowSpeed = Math.min(previousResult.arrowSpeed, arrowSpeed)
-//        continue
-//      }
-//      previousResult = {arrowSpeed, diff}
-//      if (diff < desired){
-//        arrowSpeed -= 1
-//      } else {
-//        arrowSpeed += 1
-//      }
-//    }
-//  }
-//  return arrowSpeed
-//}
-//export function calcArrowSpeed(params: ArrowSpeedParams){
-//  const {farDistance, shortDistance, desiredSightMark, ...extras} = params
-//
-//  let initialArrowSpeed = 50
-//  return convergeFunc((arrowSpeed: number)=>{
-//    const p = {s_v: 0, v: arrowSpeed, ...extras}
-//    const {sightHeight: firstSight} = getSight({s_h: shortDistance, ...p})
-//    const {sightHeight: secondSight} = getSight({s_h: farDistance, ...p})
-//
-//    const diff = Math.abs(firstSight - secondSight)
-//
-//    const isLower = diff > desiredSightMark
-//    return {isLower}
-//  }, initialArrowSpeed, 1)
-//}
-export function calcArrowSpeed(farDistance: number, shortDistance: number, desired: number, params:any={}){
-//farDistance(m), shortDistance(m), desired(mm)
-  const tol = 1e-5
+export function calcArrowSpeed(params: ArrowSpeedParams){
+  const {farDistance, shortDistance, desiredSightMark, ...extras} = params
 
-  let arrowSpeed = 50
-  let previousResult = null
-  let upperArrowSpeed = null
-  let lowerArrowSpeed = null
-  let counter = 0
-
-  while (++counter < 1e3){
-    if (upperArrowSpeed !== null){
-      arrowSpeed = (upperArrowSpeed + lowerArrowSpeed)/2
-    }
-    const p = {...params, arrowSpeed}
-    const {sightHeight: firstSight} = getSight(shortDistance, 0, p)
-    const {sightHeight: secondSight} = getSight(farDistance, 0, p)
+  let initialArrowSpeed = 50
+  return convergeFunc((arrowSpeed: number)=>{
+    const p = {s_v: 0, v: arrowSpeed, ...extras}
+    const {sightHeight: firstSight} = getSight({s_h: shortDistance, ...p})
+    const {sightHeight: secondSight} = getSight({s_h: farDistance, ...p})
 
     const diff = Math.abs(firstSight - secondSight)
-    if (upperArrowSpeed !== null && lowerArrowSpeed !== null){
-      if (upperArrowSpeed - lowerArrowSpeed < tol){
-        break
-      }
-      if (diff < desired){
-        upperArrowSpeed = arrowSpeed
-      } else {
-        lowerArrowSpeed = arrowSpeed
-      }
-    } else {
-      if (previousResult && (previousResult.diff-desired > 0) !== (diff-desired > 0)){
-        upperArrowSpeed = Math.max(previousResult.arrowSpeed, arrowSpeed)
-        lowerArrowSpeed = Math.min(previousResult.arrowSpeed, arrowSpeed)
-        continue
-      }
-      previousResult = {arrowSpeed, diff}
-      if (diff < desired){
-        arrowSpeed -= 1
-      } else {
-        arrowSpeed += 1
-      }
-    }
-  }
-  return arrowSpeed
+
+    const isLower = diff > desiredSightMark
+    return {isLower}
+  }, initialArrowSpeed, 1)
 }

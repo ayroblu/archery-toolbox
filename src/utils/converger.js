@@ -11,16 +11,16 @@ export function calculateBounds(func: number=>BoundResult, initialValue: number,
 
   while (++counter < 1e3){
     const {isLower} = func(value)
+    if (previousResult && (isLower !== previousResult.isLower)){
+      upperBound = Math.max(previousResult.value, value)
+      lowerBound = Math.min(previousResult.value, value)
+      return {lowerBound, upperBound}
+    }
     previousResult = {isLower, value}
     if (isLower){
       value += crawl
     } else {
       value -= crawl
-    }
-    if (previousResult && (isLower !== previousResult.isLower)){
-      upperBound = Math.max(previousResult.value, value)
-      lowerBound = Math.min(previousResult.value, value)
-      return {lowerBound, upperBound}
     }
   }
   throw new Error('Failed to calculate bounds')

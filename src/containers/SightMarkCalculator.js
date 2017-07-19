@@ -41,18 +41,23 @@ class SightMarkCalculator extends Component {
   _calculateArrowSpeed = ()=>{
     const {farDistance, shortDistance, diffSightMarks} = this._validateArrowSpeed()
     const {Cd, arm, jaw, faceSightDistance, eyeArrowDistance} = this.props.smc
-    const params = {Cd, arm: parseFloat(faceSightDistance) || arm
-    , jaw: parseFloat(eyeArrowDistance) || jaw}
-    const arrowSpeed = calcArrowSpeed(farDistance, shortDistance, diffSightMarks, params)
+    const params = {
+      farDistance, shortDistance, desiredSightMark: diffSightMarks
+    , Cd, arm: parseFloat(faceSightDistance) || arm
+    , jaw: parseFloat(eyeArrowDistance) || jaw
+    }
+    const arrowSpeed = calcArrowSpeed(params)
     this.props.smActions.set({arrowSpeed})
   }
   _calculateSightMarks = ()=>{
     const {Cd, arm, jaw, arrowSpeed, useDrag, faceSightDistance, eyeArrowDistance} = this.props.smc
-    const params = {Cd, arm: parseFloat(faceSightDistance) || arm
-    , jaw: parseFloat(eyeArrowDistance) || jaw, arrowSpeed}
+    const params = {
+      Cd, arm: parseFloat(faceSightDistance) || arm
+    , jaw: parseFloat(eyeArrowDistance) || jaw, v: arrowSpeed
+    }
 
     if (useDrag){
-      const referenceMark = smcnd.getSight({v: arrowSpeed, s_v: 0, s_h:18, arm, jaw}).sightHeight + 0.003
+      const referenceMark = smcnd.getSight({...params, s_v: 0, s_h: 18}).sightHeight + 0.003
       const sightMarks = distances.map(d=>{
         const angledMarks = angles.map(targetAngle=>{
           const s_v = d*Math.sin(targetAngle)
@@ -66,10 +71,12 @@ class SightMarkCalculator extends Component {
       })
       this.props.smActions.set({sightMarks})
     } else {
-      const referenceMark = getSight(18, 0, params).sightHeight + 0.003
+      const referenceMark = getSight({...params, s_v: 0, s_h: 18}).sightHeight + 0.003
       const sightMarks = distances.map(d=>{
         const angledMarks = angles.map(targetAngle=>{
-          return getSight(d, targetAngle, params)
+          const s_v = Math.sin(targetAngle)*d
+          const s_h = Math.cos(targetAngle)*d
+          return getSight({...params, s_v, s_h})
         }).map(m=>({...m, sightHeight: referenceMark - m.sightHeight}))
         return {
           angledMarks
