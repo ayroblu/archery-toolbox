@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "coveralls": "^2.13.1",
     "flow-bin": "^0.50.0",
     "intl": "^1.2.5",
     "material-ui": "^0.18.3",
@@ -29,6 +30,8 @@
     "test": "react-scripts test --env=jsdom",
     "flow": "flow",
     "build:locale": "NODE_ENV=development babel-node generateLocaleMessages.js",
+    "coverage": "react-scripts test --env=jsdom --coverage",
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
     "eject": "react-scripts eject"
   }
 }
