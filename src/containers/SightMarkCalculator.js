@@ -4,8 +4,6 @@ import { bindActionCreators } from 'redux'
 import TextField from 'material-ui/TextField'
 import RaisedButton from 'material-ui/RaisedButton'
 import Toggle from 'material-ui/Toggle'
-import SelectField from 'material-ui/SelectField'
-import MenuItem from 'material-ui/MenuItem'
 
 import * as smActions from '../actions/sightMarkCalculator'
 import {yardsToMetres, metresToYards, getSight, calcArrowSpeed} from '../utils/smCalc'
@@ -19,37 +17,40 @@ const angles = Array(40/5*2+1).fill().map((v,i)=>(i-40/5)*5*Math.PI/180)
 
 class SightMarkCalculator extends Component {
   async componentWillMount(){
-    await this._calculateArrowSpeed()
     await this._calculateSightMarks()
   }
   _validateArrowSpeed(){
-    let {farDistance, shortDistance, diffSightMarks} = this.props.smc
-    if (farDistance && shortDistance && diffSightMarks){
+    let {farDistance, shortDistance, farDistanceMark, shortDistanceMark} = this.props.smc
+    if (farDistance && shortDistance && farDistanceMark && shortDistanceMark){
       farDistance = parseFloat(farDistance)
       shortDistance = parseFloat(shortDistance)
-      diffSightMarks = parseFloat(diffSightMarks)/100
-      if (farDistance && shortDistance && diffSightMarks) {
+      farDistanceMark = parseFloat(farDistanceMark)/100
+      shortDistanceMark = parseFloat(shortDistanceMark)/100
+      if (farDistance && shortDistance && farDistanceMark && shortDistanceMark) {
         return {
           farDistance
         , shortDistance
-        , diffSightMarks
+        , farDistanceMark
+        , shortDistanceMark
         }
       }
     }
-    return {farDistance: 60, shortDistance: 20, diffSightMarks: 0.055-0.004}
+    return {farDistance: 60, shortDistance: 20, farDistanceMark: 0.055, shortDistanceMark: 0.004}
   }
   _calculateArrowSpeed = ()=>{
-    const {farDistance, shortDistance, diffSightMarks} = this._validateArrowSpeed()
+    const {farDistance, shortDistance, farDistanceMark, shortDistanceMark} = this._validateArrowSpeed()
     const {Cd, arm, jaw, faceSightDistance, eyeArrowDistance} = this.props.smc
     const params = {
-      farDistance, shortDistance, desiredSightMark: diffSightMarks
+      farDistance, shortDistance, farDistanceMark, shortDistanceMark
     , Cd, arm: parseFloat(faceSightDistance) || arm
     , jaw: parseFloat(eyeArrowDistance) || jaw
     }
     const arrowSpeed = calcArrowSpeed(params)
     this.props.smActions.set({arrowSpeed})
   }
-  _calculateSightMarks = ()=>{
+  _calculateSightMarks = async ()=>{
+    await this._calculateArrowSpeed()
+    const {shortDistance, shortDistanceMark} = this._validateArrowSpeed()
     const {Cd, arm, jaw, arrowSpeed, useDrag, faceSightDistance, eyeArrowDistance} = this.props.smc
     const params = {
       Cd, arm: parseFloat(faceSightDistance) || arm
@@ -57,7 +58,7 @@ class SightMarkCalculator extends Component {
     }
 
     if (useDrag){
-      const referenceMark = smcnd.getSight({...params, s_v: 0, s_h: 18}).sightHeight + 0.003
+      const referenceMark = smcnd.getSight({...params, s_v: 0, s_h: shortDistance}).sightHeight + shortDistanceMark
       const sightMarks = distances.map(d=>{
         const angledMarks = angles.map(targetAngle=>{
           const s_v = d*Math.sin(targetAngle)
@@ -71,7 +72,7 @@ class SightMarkCalculator extends Component {
       })
       this.props.smActions.set({sightMarks})
     } else {
-      const referenceMark = getSight({...params, s_v: 0, s_h: 18}).sightHeight + 0.003
+      const referenceMark = getSight({...params, s_v: 0, s_h: shortDistance}).sightHeight + shortDistanceMark
       const sightMarks = distances.map(d=>{
         const angledMarks = angles.map(targetAngle=>{
           const s_v = Math.sin(targetAngle)*d
@@ -147,7 +148,7 @@ class SightMarkCalculator extends Component {
   }
   render() {
     const {smActions} = this.props
-    const {farDistance, shortDistance, diffSightMarks, refDistance
+    const {farDistance, shortDistance, farDistanceMark, shortDistanceMark
     , faceSightDistance, eyeArrowDistance, arrowSpeed
     , useDrag, showAngles, sightMarks
     } = this.props.smc
@@ -170,58 +171,45 @@ class SightMarkCalculator extends Component {
         <h2>Sight Marks Calculator</h2>
         <div className='arrowSpeedCalc'>
           <h3>Arrow Speed parameters</h3>
-          <div>
+          <div className='SightMarkCalculator-row'>
             <TextField
               hintText="Use a long distance sight mark"
               floatingLabelText="Far distance (m)"
               value={farDistance}
               onChange={e=>smActions.set({farDistance:e.target.value})}
             />
+            <TextField
+              hintText="This is normally found on your sight"
+              floatingLabelText="Far Sight Mark (cm)"
+              value={farDistanceMark}
+              onChange={e=>smActions.set({farDistanceMark: e.target.value})}
+            />
           </div>
-          <div>
+          <div className='SightMarkCalculator-row'>
             <TextField
               hintText="Use a short distance sight mark"
               floatingLabelText="Short distance (m)"
               value={shortDistance}
               onChange={e=>smActions.set({shortDistance:e.target.value})}
             />
-          </div>
-          <div>
             <TextField
-              hintText="Difference between sight marks"
-              floatingLabelText="Sight Mark Difference (cm)"
-              value={diffSightMarks}
-              onChange={e=>smActions.set({diffSightMarks: e.target.value})}
+              hintText="This is normally found on your sight"
+              floatingLabelText="Short Sight Mark (cm)"
+              value={shortDistanceMark}
+              onChange={e=>smActions.set({shortDistanceMark: e.target.value})}
             />
           </div>
-          <RaisedButton label="Calculate Arrow Speed" primary={true} 
-            onTouchTap={this._calculateArrowSpeed} />
-          {arrowSpeed && <p>Arrow Speed: {arrowSpeed.toFixed(1)}m/s</p>}
         </div>
-        <div>
-          <SelectField
-            floatingLabelText="Reference Distance (optional)"
-            value={refDistance}
-            maxHeight={300}
-            onChange={(e,i,v)=>smActions.set({refDistance: v})}
-          >
-            {distances.map(d=>(
-              <MenuItem value={d} primaryText={`${d}`} key={d} />
-            ))}
-          </SelectField>
-        </div>
-        <div>
+        <div className='SightMarkCalculator-row'>
           <TextField
             hintText="This is about your draw length + sight length"
-            floatingLabelText="Face to sight distance"
+            floatingLabelText="Face to sight distance (m)"
             value={faceSightDistance}
             onChange={e=>smActions.set({faceSightDistance: e.target.value})}
           />
-        </div>
-        <div>
           <TextField
             hintText="This is the distance from your nock to your eye"
-            floatingLabelText="Eye to Arrow distance"
+            floatingLabelText="Eye to Arrow distance (m)"
             value={eyeArrowDistance}
             onChange={e=>smActions.set({eyeArrowDistance: e.target.value})}
           />
@@ -242,6 +230,7 @@ class SightMarkCalculator extends Component {
         </div>
         <RaisedButton label="Calculate Sight Marks" primary={true}
           onTouchTap={this._calculateSightMarks} />
+        {arrowSpeed && <p>Arrow Speed: {arrowSpeed.toFixed(1)}m/s</p>}
         {this._renderSightMarksSensitivity()}
         {this._renderClout()}
         <table>

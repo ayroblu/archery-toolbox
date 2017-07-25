@@ -4,7 +4,8 @@ const initialState = {
   // arrow speed calculator
   farDistance: '60'
 , shortDistance: '18'
-, diffSightMarks: '5.1'
+, farDistanceMark: '5.5'
+, shortDistanceMark: '0.4'
 , Cd: 0.1
 , arm: 0.73+0.16
 , jaw: 0.14

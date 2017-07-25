@@ -69,7 +69,7 @@ export function getSight(params: SightParams): SightResult{
   return getSightHeight(params, angle)
 }
 export function calcArrowSpeed(params: ArrowSpeedParams): number{
-  const {farDistance, shortDistance, desiredSightMark, ...extras} = params
+  const {farDistance, shortDistance, farDistanceMark, shortDistanceMark, ...extras} = params
 
   let initialArrowSpeed = 50
   return convergeFunc((arrowSpeed: number)=>{
@@ -79,7 +79,7 @@ export function calcArrowSpeed(params: ArrowSpeedParams): number{
 
     const diff = Math.abs(firstSight - secondSight)
 
-    const isLower = diff > desiredSightMark
+    const isLower = diff > Math.abs(farDistanceMark - shortDistanceMark)
     return {isLower}
   }, initialArrowSpeed, 1)
 }

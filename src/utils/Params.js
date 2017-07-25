@@ -33,7 +33,8 @@ export type ArrowParams = {
 export type ArrowSpeedParams = {
   farDistance: number
 , shortDistance: number
-, desiredSightMark: number
+, farDistanceMark: number
+, shortDistanceMark: number
 , arm?: number
 , jaw?: number
 }
