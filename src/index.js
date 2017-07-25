@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-//import registerServiceWorker from './registerServiceWorker'
+import registerServiceWorker from './registerServiceWorker'
 import { Provider } from 'react-redux'
 import createHistory from 'history/createBrowserHistory'
 import { BrowserRouter, withRouter } from 'react-router-dom'
@@ -95,4 +95,5 @@ if (isHotReload && module.hot) {
   })
 }
 
-//registerServiceWorker()
+//ReactDOM.render(<App />, document.getElementById('root'))
+registerServiceWorker()
