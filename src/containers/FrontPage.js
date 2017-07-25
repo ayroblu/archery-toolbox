@@ -23,7 +23,7 @@ class FrontPage extends Component {
               <li>Centre shot</li>
             </ul>
           </li>
-          <li>How to clout</li>
+          <li>Outline of some clout tips</li>
           <li>Bow efficiency</li>
         </ul>
       </section>
