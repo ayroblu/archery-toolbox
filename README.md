@@ -16,3 +16,22 @@ Just a quick outline of important things for archery
     * Centre shot
 * How to clout
 * Bow efficiency?
+
+How to build
+------------
+### gh-pages
+- We use the HashRouter here, and have to set a basename of `/archery-toolbox`
+
+```bash
+yarn deploy
+```
+
+Check: https://ayroblu.github.io/archery-toolbox
+
+### Personal page at server root
+- Can use the normal browser router
+
+```bash
+yarn build
+# copy files over
+```

@@ -2,6 +2,7 @@
   "name": "archery-toolbox",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@material-ui/core": "^4.3.2",
     "@types/jest": "24.0.17",
@@ -23,6 +24,8 @@
     "test": "react-scripts test",
     "coverage": "react-scripts test --env=jsdom --coverage",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
+    "predeploy": "REACT_APP_GH_PAGES=1 yarn build",
+    "deploy": "gh-pages -d build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -39,5 +42,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^2.1.1"
   }
 }

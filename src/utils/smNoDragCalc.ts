@@ -26,7 +26,13 @@ export function getSight({ v, s_v, s_h, arm, jaw }: SightParams): SightResult {
 }
 export function calcArrowSpeed(params: ArrowSpeedParams): number {
   //farDistance(m), shortDistance(m), desiredSightMark(mm)
-  const { farDistance, shortDistance, desiredSightMark, ...extras } = params;
+  const {
+    farDistance,
+    shortDistance,
+    farDistanceMark,
+    shortDistanceMark,
+    ...extras
+  } = params;
 
   let initialArrowSpeed = 50;
   return convergeFunc(
@@ -40,7 +46,8 @@ export function calcArrowSpeed(params: ArrowSpeedParams): number {
 
       const diff = Math.abs(firstSight - secondSight);
 
-      const isLower = diff > desiredSightMark;
+      // Slow = lower = bigger sight mark gap
+      const isLower = diff > Math.abs(farDistanceMark - shortDistanceMark);
       return { isLower };
     },
     initialArrowSpeed,

@@ -1,20 +1,32 @@
-import React from "react";
-import { withRouter, Switch, Route } from "react-router-dom";
-
-//import NoMatch from '../components/NoMatch'
-
 import "./App.css";
+
+import React from "react";
+import { HashRouter, Route, Switch, BrowserRouter } from "react-router-dom";
 
 import { FrontPage } from "../components/front-page/FrontPage";
 import { SightMarkCalculator } from "../components/sight-mark-calculator/SightMarkCalculator";
 
-const AppComp: React.FC = () => {
+//import NoMatch from '../components/NoMatch'
+
+const Routes: React.FC = () => (
+  <Switch>
+    <Route exact path="/" component={FrontPage} />
+    <Route path="/smc" component={SightMarkCalculator} />
+  </Switch>
+);
+export const App: React.FC = () => {
+  const isHashRouter = process.env.REACT_APP_GH_PAGES;
+  // For some reason couldn't define another component with types
+  if (isHashRouter) {
+    return (
+      <HashRouter>
+        <Routes />
+      </HashRouter>
+    );
+  }
   return (
-    <Switch>
-      <Route exact path="/" component={FrontPage} />
-      <Route path="/smc" component={SightMarkCalculator} />
-    </Switch>
+    <BrowserRouter>
+      <Routes />
+    </BrowserRouter>
   );
 };
-
-export const App = withRouter(AppComp);

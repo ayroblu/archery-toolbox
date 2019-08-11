@@ -1,45 +1,45 @@
-.SightMarkCalculator{
+.SightMarkCalculator {
   padding: 20px;
 }
-.SightMarkCalculator-row{
+.SightMarkCalculator-row > * {
+  width: 300px;
 }
-.SightMarkCalculator-row > *:not(:last-child){
+.SightMarkCalculator-row > *:not(:last-child) {
   margin-right: 10px;
 }
-.SightMarkCalculator > h2{
+.SightMarkCalculator > h2 {
   font-weight: 400;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
-.SightMarkCalculator h3{
-  font-weight:400;
+.SightMarkCalculator h3 {
+  font-weight: 400;
   margin-bottom: 0;
 }
-.SightMarkCalculator label{
+.SightMarkCalculator label {
   display: block;
 }
-.SightMarkCalculator > table{
+.SightMarkCalculator > table {
   border-collapse: collapse;
   margin: auto;
 }
-.SightMarkCalculator thead th{
+.SightMarkCalculator thead th {
   padding: 4px;
 }
-.SightMarkCalculator td{
-  text-align:center;
+.SightMarkCalculator td {
+  text-align: center;
 }
-.SightMarkCalculator tbody tr:nth-child(even){
-  background:#eee;
+.SightMarkCalculator tbody tr:nth-child(even) {
+  background: #eee;
 }
-.SightMarkCalculator tbody td:nth-child(10){
-  background:#eee;
+.SightMarkCalculator tbody td:nth-child(10) {
+  background: #eee;
 }
-.SightMarkCalculator tbody tr:hover{
-  background:#fafafa;
+.SightMarkCalculator tbody tr:hover {
+  background: #fafafa;
 }
-.SightMarkCalculator tbody th{
+.SightMarkCalculator tbody th {
   text-align: right;
 }
-.SightMarkCalculator .highlight{
+.SightMarkCalculator .highlight {
   background-color: #fafafa;
 }
-
