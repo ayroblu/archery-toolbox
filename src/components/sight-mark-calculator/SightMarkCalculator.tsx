@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import TextField from "@material-ui/core/TextField";
-import RaisedButton from "@material-ui/core/RaisedButton";
-import Toggle from "@material-ui/core/Toggle";
+import Button from "@material-ui/core/Button";
+import Switch from "@material-ui/core/Switch";
 
 import {
   yardsToMetres,
@@ -11,6 +11,7 @@ import {
 } from "../../utils/smCalc";
 import * as smcnd from "../../utils/smNoDragCalc";
 import "./SightMarkCalculator.css";
+import { FormControlLabel } from "@material-ui/core";
 
 const distances = Array.from(
   new Set(
@@ -30,19 +31,42 @@ const angles = Array((40 / 5) * 2 + 1)
   .fill(null)
   .map((v, i) => ((i - 40 / 5) * 5 * Math.PI) / 180);
 
-type SightMarkInputsUnsafe = {
-  farDistance: string;
-  shortDistance: string;
-  farDistanceMark: string;
-  shortDistanceMark: string;
-};
 type SightMarkInputs = {
   farDistance: number;
   shortDistance: number;
   farDistanceMark: number;
   shortDistanceMark: number;
 };
-function validateArrowSpeed(params: SightMarkInputsUnsafe): SightMarkInputs {
+type SightMarkInputsUnsafe = { [key in keyof SightMarkInputs]: string };
+type EquipmentInputs = {
+  faceSightDistance: number;
+  eyeArrowDistance: number;
+};
+type EquipmentInputsUnsafe = { [key in keyof EquipmentInputs]: string };
+type EquipmentInputsValidated = {
+  arm: number;
+  jaw: number;
+};
+type ExtraUserOptions = {
+  useDrag: boolean;
+  showAngles: boolean;
+};
+type PredefinedConstants = Readonly<{
+  Cd: number;
+  arm: number;
+  jaw: number;
+}>;
+type SightMarks = {
+  distance: string;
+  angledMarks: number[];
+}[];
+type ComputedValues = {
+  arrowSpeed: number;
+  sightMarks: SightMarks[];
+};
+function validateSightMarkInputs(
+  params: SightMarkInputsUnsafe
+): SightMarkInputs {
   if (
     !(
       params.farDistance &&
@@ -71,49 +95,57 @@ function validateArrowSpeed(params: SightMarkInputsUnsafe): SightMarkInputs {
     shortDistanceMark: 0.004
   };
 }
-function calculateArrowSpeed(inputs: SightMarkInputsUnsafe) {
-  const {
-    farDistance,
-    shortDistance,
-    farDistanceMark,
-    shortDistanceMark
-  } = validateArrowSpeed(inputs);
-  const { Cd, arm, jaw, faceSightDistance, eyeArrowDistance } = this.props.smc;
-  const params = {
-    farDistance,
-    shortDistance,
-    farDistanceMark,
-    shortDistanceMark,
-    Cd,
+function validateEquipmentInputs(
+  { eyeArrowDistance, faceSightDistance }: EquipmentInputsUnsafe,
+  { arm, jaw }: PredefinedConstants
+): EquipmentInputsValidated {
+  return {
     arm: parseFloat(faceSightDistance) || arm,
     jaw: parseFloat(eyeArrowDistance) || jaw
   };
-  const arrowSpeed = calcArrowSpeed(params);
-  this.props.smActions.set({ arrowSpeed });
 }
-function calculateSightMarks() {
-  await calculateArrowSpeed();
-  const { shortDistance, shortDistanceMark } = this._validateArrowSpeed();
-  const {
-    Cd,
-    arm,
-    jaw,
-    arrowSpeed,
-    useDrag,
-    faceSightDistance,
-    eyeArrowDistance
-  } = this.props.smc;
+function calculateArrowSpeed(
+  sightMarkInputs: SightMarkInputs,
+  equipmentInputs: EquipmentInputsValidated,
+  { Cd }: PredefinedConstants
+) {
   const params = {
+    ...sightMarkInputs,
     Cd,
-    arm: parseFloat(faceSightDistance) || arm,
-    jaw: parseFloat(eyeArrowDistance) || jaw,
+    ...equipmentInputs
+  };
+  const arrowSpeed = calcArrowSpeed(params);
+  return arrowSpeed;
+}
+function calculateSightMarks(
+  sightMarkInputs: SightMarkInputsUnsafe,
+  equipmentInputs: EquipmentInputsUnsafe,
+  predefinedConstants: PredefinedConstants,
+  { useDrag }: ExtraUserOptions
+) {
+  const validSightMarkInputs = validateSightMarkInputs(sightMarkInputs);
+  const validEquipmentInputs = validateEquipmentInputs(
+    equipmentInputs,
+    predefinedConstants
+  );
+  const arrowSpeed = calculateArrowSpeed(
+    validSightMarkInputs,
+    validEquipmentInputs,
+    predefinedConstants
+  );
+  const params = {
+    Cd: predefinedConstants.Cd,
+    ...validEquipmentInputs,
     v: arrowSpeed
   };
 
   if (useDrag) {
     const referenceMark =
-      smcnd.getSight({ ...params, s_v: 0, s_h: shortDistance }).sightHeight +
-      shortDistanceMark;
+      smcnd.getSight({
+        ...params,
+        s_v: 0,
+        s_h: validSightMarkInputs.shortDistance
+      }).sightHeight + validSightMarkInputs.shortDistanceMark;
     const sightMarks = distances.map(d => {
       const angledMarks = angles
         .map(targetAngle => {
@@ -130,8 +162,8 @@ function calculateSightMarks() {
     this.props.smActions.set({ sightMarks });
   } else {
     const referenceMark =
-      getSight({ ...params, s_v: 0, s_h: shortDistance }).sightHeight +
-      shortDistanceMark;
+      getSight({ ...params, s_v: 0, s_h: validSightMarkInputs.shortDistance })
+        .sightHeight + validSightMarkInputs.shortDistanceMark;
     const sightMarks = distances.map(d => {
       const angledMarks = angles
         .map(targetAngle => {
@@ -148,7 +180,7 @@ function calculateSightMarks() {
     this.props.smActions.set({ sightMarks });
   }
 }
-function renderSightMarksSensitivity() {
+const SightMarksSensitivity: React.FC = () => {
   const { faceSightDistance, arrowSpeed, eyeArrowDistance } = this.props.smc;
   const arm = parseFloat(faceSightDistance);
   const jaw = parseFloat(eyeArrowDistance);
@@ -205,8 +237,8 @@ function renderSightMarksSensitivity() {
       ))}
     </div>
   );
-}
-function renderClout() {
+};
+const CloutAnalysis: React.FC = () => {
   const { faceSightDistance, arrowSpeed, eyeArrowDistance } = this.props.smc;
   const arm = parseFloat(faceSightDistance);
   const jaw = parseFloat(eyeArrowDistance);
@@ -257,22 +289,66 @@ function renderClout() {
       <p>Time in the air: {time.toFixed(1)}s</p>
     </div>
   );
-}
+};
 export const SightMarkCalculator: React.FC = () => {
-  useEffect(calculateSignMarks, []);
+  const [sightMarkInputs, setSightMarkInputs] = useState({
+    farDistance: "60",
+    shortDistance: "18",
+    farDistanceMark: "5.5",
+    shortDistanceMark: "0.4"
+  });
+  const [equipmentInputs, setEquipmentInputs] = useState({
+    faceSightDistance: "0.9",
+    eyeArrowDistance: "0.14"
+  });
+  const predefinedConstants: PredefinedConstants = {
+    Cd: 0.1,
+    arm: 0.73 + 0.16,
+    jaw: 0.14
+  };
+  const [extraUserOptions, setExtraUserOptions] = useState({
+    useDrag: false,
+    showAngles: false
+  });
+  const [sightMarks, setSightMarks] = useState<SightMarks>([]);
+  const runCalculateSightMarks = () =>
+    calculateSightMarks(
+      sightMarkInputs,
+      equipmentInputs,
+      predefinedConstants,
+      extraUserOptions
+    );
+  useEffect(runCalculateSightMarks, []);
 
   const {
     farDistance,
-    shortDistance,
     farDistanceMark,
-    shortDistanceMark,
-    faceSightDistance,
-    eyeArrowDistance,
-    arrowSpeed,
-    useDrag,
-    showAngles,
-    sightMarks
-  } = this.props.smc;
+    shortDistance,
+    shortDistanceMark
+  } = sightMarkInputs;
+  const { eyeArrowDistance, faceSightDistance } = equipmentInputs;
+  const { showAngles, useDrag } = extraUserOptions;
+  const { arrowSpeed, sightMarks } = this.props.smc;
+
+  const setSightMarkInputsHandler = (name: keyof SightMarkInputs) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSightMarkInputs({ ...sightMarkInputs, [name]: e.target.value });
+  };
+  const setEquipmentInputsHandler = (name: keyof EquipmentInputs) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setEquipmentInputs({ ...equipmentInputs, [name]: e.target.value });
+  };
+  const setExtraUserOptionsHandler = (name: keyof ExtraUserOptions) => (
+    e: React.ChangeEvent<HTMLInputElement>,
+    checked: boolean
+  ) => {
+    setExtraUserOptions({ ...extraUserOptions, [name]: checked });
+  };
+
+  // computed
+  // , arrowSpeed: 55.1
 
   const angleHeadings = showAngles
     ? angles.map(a => `${((a * 180) / Math.PI).toFixed(0)}deg`)
@@ -292,69 +368,79 @@ export const SightMarkCalculator: React.FC = () => {
         <h3>Arrow Speed parameters</h3>
         <div className="SightMarkCalculator-row">
           <TextField
-            hintText="Use a long distance sight mark"
-            floatingLabelText="Far distance (m)"
+            placeholder="Use a long distance sight mark"
+            label="Far distance (m)"
             value={farDistance}
-            onChange={e => smActions.set({ farDistance: e.target.value })}
+            onChange={setSightMarkInputsHandler("farDistance")}
           />
           <TextField
-            hintText="This is normally found on your sight"
-            floatingLabelText="Far Sight Mark (cm)"
+            placeholder="This is normally found on your sight"
+            label="Far Sight Mark (cm)"
             value={farDistanceMark}
-            onChange={e => smActions.set({ farDistanceMark: e.target.value })}
+            onChange={setSightMarkInputsHandler("farDistanceMark")}
           />
         </div>
         <div className="SightMarkCalculator-row">
           <TextField
-            hintText="Use a short distance sight mark"
-            floatingLabelText="Short distance (m)"
+            placeholder="Use a short distance sight mark"
+            label="Short distance (m)"
             value={shortDistance}
-            onChange={e => smActions.set({ shortDistance: e.target.value })}
+            onChange={setSightMarkInputsHandler("shortDistance")}
           />
           <TextField
-            hintText="This is normally found on your sight"
-            floatingLabelText="Short Sight Mark (cm)"
+            placeholder="This is normally found on your sight"
+            label="Short Sight Mark (cm)"
             value={shortDistanceMark}
-            onChange={e => smActions.set({ shortDistanceMark: e.target.value })}
+            onChange={setSightMarkInputsHandler("shortDistanceMark")}
           />
         </div>
       </div>
       <div className="SightMarkCalculator-row">
         <TextField
-          hintText="This is about your draw length + sight length"
-          floatingLabelText="Face to sight distance (m)"
+          placeholder="This is about your draw length + sight length"
+          label="Face to sight distance (m)"
           value={faceSightDistance}
-          onChange={e => smActions.set({ faceSightDistance: e.target.value })}
+          onChange={setEquipmentInputsHandler("faceSightDistance")}
         />
         <TextField
-          hintText="This is the distance from your nock to your eye"
-          floatingLabelText="Eye to Arrow distance (m)"
+          placeholder="This is the distance from your nock to your eye"
+          label="Eye to Arrow distance (m)"
           value={eyeArrowDistance}
-          onChange={e => smActions.set({ eyeArrowDistance: e.target.value })}
+          onChange={setEquipmentInputsHandler("eyeArrowDistance")}
         />
       </div>
       <div style={{ width: "250px", margin: "10px 0" }}>
-        <Toggle
+        <FormControlLabel
+          control={
+            <Switch
+              checked={useDrag}
+              onChange={setExtraUserOptionsHandler("useDrag")}
+            />
+          }
           label="Include drag"
-          toggled={useDrag}
-          onToggle={(e, useDrag) => smActions.set({ useDrag })}
         />
       </div>
       <div style={{ width: "250px", margin: "10px 0" }}>
-        <Toggle
+        <FormControlLabel
+          control={
+            <Switch
+              checked={showAngles}
+              onChange={setExtraUserOptionsHandler("showAngles")}
+            />
+          }
           label="Show angles"
-          toggled={showAngles}
-          onToggle={(e, showAngles) => smActions.set({ showAngles })}
         />
       </div>
-      <RaisedButton
-        label="Calculate Sight Marks"
-        primary={true}
-        onTouchTap={this._calculateSightMarks}
-      />
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={runCalculateSightMarks}
+      >
+        Calculate Sight Marks
+      </Button>
       {arrowSpeed && <p>Arrow Speed: {arrowSpeed.toFixed(1)}m/s</p>}
-      {this._renderSightMarksSensitivity()}
-      {this._renderClout()}
+      <SightMarksSensitivity />
+      <CloutAnalysis />
       <table>
         <thead>
           <tr>
