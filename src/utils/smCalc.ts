@@ -50,8 +50,8 @@ export function getShotAngle({ v, s_v, s_h, arm, jaw }: SightParams): number {
   let counter = 0;
   let angle = targetAngle + (1 * Math.PI) / 180;
   while (++counter < 1e3) {
-    // eslint-disable-next-line no-loop-func
     const time = convergeFunc(
+      // eslint-disable-next-line no-loop-func
       (t: number) => {
         const { x } = calcPos(angle, t, arrowParams);
         const isLower = x < s_h;
