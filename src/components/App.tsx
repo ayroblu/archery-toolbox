@@ -5,8 +5,8 @@ import { withRouter, Switch, Route } from "react-router-dom";
 
 import "./App.css";
 
-import FrontPage from "../containers/FrontPage";
-import SightMarkCalculator from "../containers/SightMarkCalculator";
+import { FrontPage } from "../components/front-page/FrontPage";
+import { SightMarkCalculator } from "../components/sight-mark-calculator/SightMarkCalculator";
 
 const AppComp: React.FC = () => {
   return (

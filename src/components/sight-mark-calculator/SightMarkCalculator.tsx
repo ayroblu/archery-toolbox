@@ -12,6 +12,7 @@ import {
 import * as smcnd from "../../utils/smNoDragCalc";
 import "./SightMarkCalculator.css";
 import { FormControlLabel } from "@material-ui/core";
+import { SightResult } from "../../utils/Params";
 
 const distances = Array.from(
   new Set(
@@ -57,9 +58,9 @@ type PredefinedConstants = Readonly<{
   jaw: number;
 }>;
 type SightMarks = {
-  distance: string;
-  angledMarks: number[];
-}[];
+  distance: number;
+  angledMarks: SightResult[];
+};
 type ComputedValues = {
   arrowSpeed: number;
   sightMarks: SightMarks[];
@@ -122,7 +123,7 @@ function calculateSightMarks(
   equipmentInputs: EquipmentInputsUnsafe,
   predefinedConstants: PredefinedConstants,
   { useDrag }: ExtraUserOptions
-) {
+): ComputedValues {
   const validSightMarkInputs = validateSightMarkInputs(sightMarkInputs);
   const validEquipmentInputs = validateEquipmentInputs(
     equipmentInputs,
@@ -159,7 +160,7 @@ function calculateSightMarks(
         distance: d
       };
     });
-    this.props.smActions.set({ sightMarks });
+    return { sightMarks, arrowSpeed };
   } else {
     const referenceMark =
       getSight({ ...params, s_v: 0, s_h: validSightMarkInputs.shortDistance })
@@ -177,11 +178,13 @@ function calculateSightMarks(
         distance: d
       };
     });
-    this.props.smActions.set({ sightMarks });
+    return { sightMarks, arrowSpeed };
   }
 }
-const SightMarksSensitivity: React.FC = () => {
-  const { faceSightDistance, arrowSpeed, eyeArrowDistance } = this.props.smc;
+const SightMarksSensitivity: React.FC<
+  EquipmentInputsUnsafe & ComputedValues
+> = props => {
+  const { faceSightDistance, arrowSpeed, eyeArrowDistance } = props;
   const arm = parseFloat(faceSightDistance);
   const jaw = parseFloat(eyeArrowDistance);
   const diffs = [
@@ -238,8 +241,10 @@ const SightMarksSensitivity: React.FC = () => {
     </div>
   );
 };
-const CloutAnalysis: React.FC = () => {
-  const { faceSightDistance, arrowSpeed, eyeArrowDistance } = this.props.smc;
+const CloutAnalysis: React.FC<
+  EquipmentInputsUnsafe & ComputedValues
+> = props => {
+  const { faceSightDistance, arrowSpeed, eyeArrowDistance } = props;
   const arm = parseFloat(faceSightDistance);
   const jaw = parseFloat(eyeArrowDistance);
   const diffs = [
@@ -310,15 +315,20 @@ export const SightMarkCalculator: React.FC = () => {
     useDrag: false,
     showAngles: false
   });
-  const [sightMarks, setSightMarks] = useState<SightMarks>([]);
-  const runCalculateSightMarks = () =>
-    calculateSightMarks(
+  const [sightMarks, setSightMarks] = useState<SightMarks[]>([]);
+  const [arrowSpeed, setArrowSpeed] = useState(55.1);
+  const runCalculateSightMarks = () => {
+    const computedValues = calculateSightMarks(
       sightMarkInputs,
       equipmentInputs,
       predefinedConstants,
       extraUserOptions
     );
+    setSightMarks(computedValues.sightMarks);
+    setArrowSpeed(computedValues.arrowSpeed);
+  };
   useEffect(runCalculateSightMarks, []);
+  const computedValues: ComputedValues = { sightMarks, arrowSpeed };
 
   const {
     farDistance,
@@ -328,7 +338,6 @@ export const SightMarkCalculator: React.FC = () => {
   } = sightMarkInputs;
   const { eyeArrowDistance, faceSightDistance } = equipmentInputs;
   const { showAngles, useDrag } = extraUserOptions;
-  const { arrowSpeed, sightMarks } = this.props.smc;
 
   const setSightMarkInputsHandler = (name: keyof SightMarkInputs) => (
     e: React.ChangeEvent<HTMLInputElement>
@@ -439,8 +448,8 @@ export const SightMarkCalculator: React.FC = () => {
         Calculate Sight Marks
       </Button>
       {arrowSpeed && <p>Arrow Speed: {arrowSpeed.toFixed(1)}m/s</p>}
-      <SightMarksSensitivity />
-      <CloutAnalysis />
+      <SightMarksSensitivity {...equipmentInputs} {...computedValues} />
+      <CloutAnalysis {...equipmentInputs} {...computedValues} />
       <table>
         <thead>
           <tr>

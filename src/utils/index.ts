@@ -1,5 +1,5 @@
-// @flow
-
-export function cn(): string{
-  return Array.from(arguments).filter(a=>a).join(' ')
+export function cn(...args: (string | null | undefined | false | 0)[]): string {
+  return Array.from(args)
+    .filter(a => a)
+    .join(" ");
 }
