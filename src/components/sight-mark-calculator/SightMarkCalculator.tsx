@@ -69,12 +69,10 @@ function validateSightMarkInputs(
   params: SightMarkInputsUnsafe
 ): SightMarkInputs {
   if (
-    !(
-      params.farDistance &&
-      params.shortDistance &&
-      params.farDistanceMark &&
-      params.shortDistanceMark
-    )
+    params.farDistance &&
+    params.shortDistance &&
+    params.farDistanceMark &&
+    params.shortDistanceMark
   ) {
     const farDistance = parseFloat(params.farDistance);
     const shortDistance = parseFloat(params.shortDistance);
