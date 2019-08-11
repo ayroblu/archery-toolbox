@@ -1,23 +1,20 @@
-import React, { Component } from "react";
+import React from "react";
 import { withRouter, Switch, Route } from "react-router-dom";
-//import { connect } from 'react-redux'
-//import { bindActionCreators } from 'redux'
 
-import Layout from "../components/Layout";
 //import NoMatch from '../components/NoMatch'
-
-//import * as userActions from '../actions/user'
 
 import "./App.css";
 
-class AppComp extends Component {
-  render() {
-    return (
-      <Switch>
-        <Route path="/" component={Layout} />
-      </Switch>
-    );
-  }
-}
+import FrontPage from "../containers/FrontPage";
+import SightMarkCalculator from "../containers/SightMarkCalculator";
+
+const AppComp: React.FC = () => {
+  return (
+    <Switch>
+      <Route exact path="/" component={FrontPage} />
+      <Route path="/smc" component={SightMarkCalculator} />
+    </Switch>
+  );
+};
 
 export const App = withRouter(AppComp);
