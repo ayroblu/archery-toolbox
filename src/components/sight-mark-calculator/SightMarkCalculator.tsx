@@ -1,184 +1,54 @@
-import React, { useEffect, useState } from "react";
-import TextField from "@material-ui/core/TextField";
+import "./SightMarkCalculator.css";
+
+import { FormControlLabel } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import Switch from "@material-ui/core/Switch";
+import TextField from "@material-ui/core/TextField";
+import React, { useEffect, useState } from "react";
 
-import {
-  yardsToMetres,
-  metresToYards,
-  getSight,
-  calcArrowSpeed
-} from "../../utils/smCalc";
-import * as smcnd from "../../utils/smNoDragCalc";
-import "./SightMarkCalculator.css";
-import { FormControlLabel } from "@material-ui/core";
 import { SightResult } from "../../utils/Params";
+import { metresToYards } from "../../utils/smCalc";
+import * as smcnd from "../../utils/smNoDragCalc";
+import { calculateSightMarks } from "./calculators";
+import { useLocalStorage } from "./helpers";
 
-const distances = Array.from(
-  new Set(
-    Array(90 / 5)
-      .fill(null)
-      .map((v, i) => (i + 1) * 5)
-      .concat(
-        Array(100 / 5)
-          .fill(null)
-          .map((v, i) => Math.round(yardsToMetres((i + 1) * 5)))
-      )
-  )
-)
-  .concat([165, 170])
-  .sort((a, b) => a - b);
-const angles = Array((40 / 5) * 2 + 1)
+export const angles = Array((40 / 5) * 2 + 1)
   .fill(null)
   .map((v, i) => ((i - 40 / 5) * 5 * Math.PI) / 180);
 
-type SightMarkInputs = {
+export type SightMarkInputs = {
   farDistance: number;
   shortDistance: number;
   farDistanceMark: number;
   shortDistanceMark: number;
 };
-type SightMarkInputsUnsafe = { [key in keyof SightMarkInputs]: string };
-type EquipmentInputs = {
+export type SightMarkInputsUnsafe = { [key in keyof SightMarkInputs]: string };
+export type EquipmentInputs = {
   faceSightDistance: number;
   eyeArrowDistance: number;
 };
-type EquipmentInputsUnsafe = { [key in keyof EquipmentInputs]: string };
-type EquipmentInputsValidated = {
+export type EquipmentInputsUnsafe = { [key in keyof EquipmentInputs]: string };
+export type EquipmentInputsValidated = {
   arm: number;
   jaw: number;
 };
-type ExtraUserOptions = {
+export type ExtraUserOptions = {
   useDrag: boolean;
   showAngles: boolean;
 };
-type PredefinedConstants = Readonly<{
+export type PredefinedConstants = Readonly<{
   Cd: number;
   arm: number;
   jaw: number;
 }>;
-type SightMarks = {
+export type SightMarks = {
   distance: number;
   angledMarks: SightResult[];
 };
-type ComputedValues = {
+export type ComputedValues = {
   arrowSpeed: number;
   sightMarks: SightMarks[];
 };
-function validateSightMarkInputs(
-  params: SightMarkInputsUnsafe
-): SightMarkInputs {
-  if (
-    params.farDistance &&
-    params.shortDistance &&
-    params.farDistanceMark &&
-    params.shortDistanceMark
-  ) {
-    const farDistance = parseFloat(params.farDistance);
-    const shortDistance = parseFloat(params.shortDistance);
-    const farDistanceMark = parseFloat(params.farDistanceMark) / 100;
-    const shortDistanceMark = parseFloat(params.shortDistanceMark) / 100;
-    if (farDistance && shortDistance && farDistanceMark && shortDistanceMark) {
-      return {
-        farDistance,
-        shortDistance,
-        farDistanceMark,
-        shortDistanceMark
-      };
-    }
-  }
-  return {
-    farDistance: 60,
-    shortDistance: 20,
-    farDistanceMark: 0.055,
-    shortDistanceMark: 0.004
-  };
-}
-function validateEquipmentInputs(
-  { eyeArrowDistance, faceSightDistance }: EquipmentInputsUnsafe,
-  { arm, jaw }: PredefinedConstants
-): EquipmentInputsValidated {
-  return {
-    arm: parseFloat(faceSightDistance) || arm,
-    jaw: parseFloat(eyeArrowDistance) || jaw
-  };
-}
-function calculateArrowSpeed(
-  sightMarkInputs: SightMarkInputs,
-  equipmentInputs: EquipmentInputsValidated,
-  { Cd }: PredefinedConstants
-) {
-  const params = {
-    ...sightMarkInputs,
-    Cd,
-    ...equipmentInputs
-  };
-  const arrowSpeed = calcArrowSpeed(params);
-  return arrowSpeed;
-}
-function calculateSightMarks(
-  sightMarkInputs: SightMarkInputsUnsafe,
-  equipmentInputs: EquipmentInputsUnsafe,
-  predefinedConstants: PredefinedConstants,
-  { useDrag }: ExtraUserOptions
-): ComputedValues {
-  const validSightMarkInputs = validateSightMarkInputs(sightMarkInputs);
-  const validEquipmentInputs = validateEquipmentInputs(
-    equipmentInputs,
-    predefinedConstants
-  );
-  const arrowSpeed = calculateArrowSpeed(
-    validSightMarkInputs,
-    validEquipmentInputs,
-    predefinedConstants
-  );
-  const params = {
-    Cd: predefinedConstants.Cd,
-    ...validEquipmentInputs,
-    v: arrowSpeed
-  };
-
-  if (useDrag) {
-    const referenceMark =
-      smcnd.getSight({
-        ...params,
-        s_v: 0,
-        s_h: validSightMarkInputs.shortDistance
-      }).sightHeight + validSightMarkInputs.shortDistanceMark;
-    const sightMarks = distances.map(d => {
-      const angledMarks = angles
-        .map(targetAngle => {
-          const s_v = d * Math.sin(targetAngle);
-          const s_h = d * Math.cos(targetAngle);
-          return smcnd.getSight({ ...params, s_v, s_h });
-        })
-        .map(m => ({ ...m, sightHeight: referenceMark - m.sightHeight }));
-      return {
-        angledMarks,
-        distance: d
-      };
-    });
-    return { sightMarks, arrowSpeed };
-  } else {
-    const referenceMark =
-      getSight({ ...params, s_v: 0, s_h: validSightMarkInputs.shortDistance })
-        .sightHeight + validSightMarkInputs.shortDistanceMark;
-    const sightMarks = distances.map(d => {
-      const angledMarks = angles
-        .map(targetAngle => {
-          const s_v = Math.sin(targetAngle) * d;
-          const s_h = Math.cos(targetAngle) * d;
-          return getSight({ ...params, s_v, s_h });
-        })
-        .map(m => ({ ...m, sightHeight: referenceMark - m.sightHeight }));
-      return {
-        angledMarks,
-        distance: d
-      };
-    });
-    return { sightMarks, arrowSpeed };
-  }
-}
 const SightMarksSensitivity: React.FC<
   EquipmentInputsUnsafe & ComputedValues
 > = props => {
@@ -294,16 +164,22 @@ const CloutAnalysis: React.FC<
   );
 };
 export const SightMarkCalculator: React.FC = () => {
-  const [sightMarkInputs, setSightMarkInputs] = useState({
-    farDistance: "60",
-    shortDistance: "18",
-    farDistanceMark: "5.5",
-    shortDistanceMark: "0.4"
-  });
-  const [equipmentInputs, setEquipmentInputs] = useState({
-    faceSightDistance: "0.9",
-    eyeArrowDistance: "0.14"
-  });
+  const [sightMarkInputs, setSightMarkInputs] = useLocalStorage(
+    "sightMarkInputs",
+    {
+      farDistance: "60",
+      shortDistance: "18",
+      farDistanceMark: "5.5",
+      shortDistanceMark: "0.4"
+    }
+  );
+  const [equipmentInputs, setEquipmentInputs] = useLocalStorage(
+    "equipmentInputs",
+    {
+      faceSightDistance: "0.9",
+      eyeArrowDistance: "0.14"
+    }
+  );
   const predefinedConstants: PredefinedConstants = {
     Cd: 0.1,
     arm: 0.73 + 0.16,
